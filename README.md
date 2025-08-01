@@ -1,24 +1,10 @@
-Aqui está a versão melhorada e refinada do seu guia para debug de Lambdas em Go com `awslambdarpc`, usando boas práticas de formatação e instruções mais claras:
-
----
-
 # 🐞 Debugando Lambda em Go (sem Docker, SAM ou Serverless)
 
 Este guia mostra como **debugar sua função Lambda escrita em Go localmente**, usando apenas ferramentas nativas e leves, como `delve` e `awslambdarpc`.
 
 ---
 
-## ✅ 1. Compile sua função com símbolos de debug
-
-```bash
-go build -v -gcflags='all=-N -l' -o main ./cmd/lambda
-```
-
-> Essa flag impede otimizações e ativa suporte total a breakpoints.
-
----
-
-## ✅ 2. Instale os pacotes necessários
+## ✅ 1. Instale os pacotes necessários
 
 ### 🐛 Delve (debugger Go)
 
@@ -36,7 +22,7 @@ go install github.com/blmayer/awslambdarpc@latest
 
 ---
 
-## ✅ 3. Configure o VS Code — `.vscode/launch.json`
+## ✅ 2. Configure o VS Code — `.vscode/launch.json`
 
 ```json
 {
@@ -66,7 +52,7 @@ go install github.com/blmayer/awslambdarpc@latest
 
 ---
 
-## ✅ 4. Configure as tasks — `.vscode/tasks.json`
+## ✅ 3. Configure as tasks — `.vscode/tasks.json`
 
 ```json
 {
@@ -97,7 +83,7 @@ go install github.com/blmayer/awslambdarpc@latest
 
 ---
 
-## ✅ 5. Crie um payload de evento — `.vscode/events/create-user.json`
+## ✅ 4. Crie um payload de evento — `.vscode/events/create-user.json`
 
 ```json
 {
@@ -111,7 +97,7 @@ go install github.com/blmayer/awslambdarpc@latest
 
 ---
 
-## ✅ 6. Executando o fluxo completo
+## ✅ 5. Executando o fluxo completo
 
 ### ▶️ Passo 1: Iniciar o debug da Lambda
 
