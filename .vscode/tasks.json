@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "json",
+      "type": "promptString",
+      "description": "Caminho do payload JSON",
+      "default": ".vscode/events/create-user.json"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "build-debug",
+      "type": "shell",
+      "command": "go build -v -gcflags='all=-N -l' -o main ./cmd/lambda"
+    },
+    {
+      "label": "send-event",
+      "type": "shell",
+      "command": "awslambdarpc -e ${input:json}",
+      "problemMatcher": []
+    }
+  ]
+}

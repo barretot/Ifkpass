@@ -1,0 +1,36 @@
+service: ${opt:stage, 'dev'}-ifkpass-proxy
+configValidationMode: error
+deprecationNotificationMode: error
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: go1.x
+  region: us-east-1
+  timeout: 900 # 15 minutos
+  stage: ${opt:stage, 'dev'}
+  memorySize: 128
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "dynamodb:*"
+            - "sqs:*"
+            - "events:*"
+            - "logs:*"
+          Resource: "*"
+
+package:
+  artifact: bin/ifkpass-proxy.zip
+
+functions:
+  Proxy:
+    handler: bootstrap
+    name: ${self:service}-${self:provider.stage}-proxy
+    timeout: 900
+    events:
+      - http:
+          path: /{proxy+}
+          method: any
