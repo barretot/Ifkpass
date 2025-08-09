@@ -2,4 +2,9 @@ package apperrors
 
 import "errors"
 
-var ErrorUserAlreadyExists = errors.New("user already exists")
+var (
+	ErrUserAlreadyExists   = errors.New("user already exists")
+	ErrInternalServerError = errors.New("internal server error")
+	ErrUserNotFound        = errors.New("user not found")
+	ErrFailedToGetUserId   = errors.New("failed to get user id")
+)

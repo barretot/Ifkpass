@@ -10,6 +10,8 @@ import (
 	"github.com/barretot/ifkpass/internal/apperrors"
 	"github.com/barretot/ifkpass/internal/config"
 	"github.com/barretot/ifkpass/internal/dto"
+	"github.com/barretot/ifkpass/internal/identity"
+	"github.com/barretot/ifkpass/internal/logger"
 	"github.com/barretot/ifkpass/internal/service"
 	"github.com/barretot/ifkpass/internal/store/dynamostore"
 	"github.com/barretot/ifkpass/internal/util"
@@ -28,14 +30,25 @@ func HandleCreateUser(ctx context.Context, event events.APIGatewayProxyRequest, 
 	}
 
 	repo := dynamostore.NewDynamoProfileRepository(cfg)
-	userService := service.NewUserService(repo)
+	identityprovider := identity.NewIdentityProvider(cfg)
+	userService := service.NewUserService(repo, identityprovider)
 
-	err := userService.CreateUser(ctx, input.Name, input.LastName, input.Email)
+	logger.Log.Info("received create user request",
+		"email", input.Email,
+		"request_id", event.RequestContext.RequestID,
+	)
+
+	err := userService.CreateUser(ctx, cfg, input.Name, input.LastName, input.Email, input.Password)
 
 	if err != nil {
-		errors.Is(err, apperrors.ErrorUserAlreadyExists)
-		return util.EncodeJson(http.StatusBadRequest, map[string]any{
-			"error": "user already exists",
+		if errors.Is(err, apperrors.ErrUserAlreadyExists) {
+			return util.EncodeJson(http.StatusBadRequest, map[string]any{
+				"error": err.Error(),
+			})
+		}
+
+		return util.EncodeJson(http.StatusInternalServerError, map[string]any{
+			"error": err.Error(),
 		})
 	}
 

@@ -8,16 +8,18 @@ import (
 
 	"github.com/barretot/ifkpass/internal/config"
 	"github.com/barretot/ifkpass/internal/handler"
+	"github.com/barretot/ifkpass/internal/logger"
 )
 
 func main() {
-	appConfig := config.LoadConfig()
+	cfg := config.LoadConfig()
+	logger.Init(cfg.GoEnv)
 
 	lambda.Start(func(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 		switch event.Resource {
 		case "/user":
 			if event.HTTPMethod == "POST" {
-				return handler.HandleCreateUser(ctx, event, appConfig)
+				return handler.HandleCreateUser(ctx, event, cfg)
 			}
 		}
 

@@ -2,7 +2,6 @@ package dynamostore
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -11,7 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/barretot/ifkpass/internal/apperrors"
 	"github.com/barretot/ifkpass/internal/config"
+	"github.com/barretot/ifkpass/internal/logger"
 	"github.com/barretot/ifkpass/internal/repo"
 	"github.com/barretot/ifkpass/internal/store/dynamostore/models"
 )
@@ -28,14 +29,22 @@ func NewDynamoProfileRepository(cfg config.AppConfig) repo.ProfileRepository {
 
 	return &DynamoProfileRepository{
 		client:    dynamodb.NewFromConfig(awsCfg),
-		tableName: cfg.TableName,
+		tableName: cfg.ProfilesTableName,
 	}
 }
 
 func (r *DynamoProfileRepository) Save(ctx context.Context, user models.User) error {
+	logger.Log.Info("saving user to dynamo",
+		"user_id", user.UserId,
+		"email", user.Email,
+		"table", r.tableName,
+	)
+
 	item, err := attributevalue.MarshalMap(user)
+
 	if err != nil {
-		return err
+		logger.Log.Error("failed to marshal user for dynamo", "err", err)
+		return fmt.Errorf("marshal user: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
@@ -45,12 +54,21 @@ func (r *DynamoProfileRepository) Save(ctx context.Context, user models.User) er
 		TableName: aws.String(r.tableName),
 		Item:      item,
 	})
-	return err
+	if err != nil {
+		logger.Log.Error("failed to put item in dynamo", "user_id", user.UserId, "err", err)
+		return fmt.Errorf("put item: %w", err)
+	}
+
+	logger.Log.Info("user saved successfully in dynamo", "user_id", user.UserId)
+	return nil
 }
 
-var ErrUserNotFound = errors.New("user not found")
-
 func (r *DynamoProfileRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
+	logger.Log.Info("querying dynamo for user by email",
+		"email", email,
+		"table", r.tableName,
+	)
+
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -63,18 +81,22 @@ func (r *DynamoProfileRepository) FindByEmail(ctx context.Context, email string)
 		},
 		Limit: aws.Int32(1),
 	})
-
 	if err != nil {
+		logger.Log.Error("failed to query dynamo", "email", email, "err", err)
 		return nil, fmt.Errorf("query FindByEmail: %w", err)
 	}
 
 	if len(out.Items) == 0 {
-		return nil, ErrUserNotFound
+		logger.Log.Warn("no user found in dynamo with given email", "email", email)
+		return nil, apperrors.ErrUserNotFound
 	}
 
 	var user models.User
 	if err := attributevalue.UnmarshalMap(out.Items[0], &user); err != nil {
+		logger.Log.Error("failed to unmarshal dynamo item to user struct", "email", email, "err", err)
 		return nil, fmt.Errorf("unmarshal user: %w", err)
 	}
+
+	logger.Log.Info("user found in dynamo", "user_id", user.UserId, "email", user.Email)
 	return &user, nil
 }
