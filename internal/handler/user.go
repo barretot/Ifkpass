@@ -10,8 +10,8 @@ import (
 	"github.com/barretot/ifkpass/internal/apperrors"
 	"github.com/barretot/ifkpass/internal/config"
 	"github.com/barretot/ifkpass/internal/dto"
-	"github.com/barretot/ifkpass/internal/repo"
 	"github.com/barretot/ifkpass/internal/service"
+	"github.com/barretot/ifkpass/internal/store/dynamostore"
 	"github.com/barretot/ifkpass/internal/util"
 	"github.com/barretot/ifkpass/internal/validator"
 )
@@ -27,7 +27,7 @@ func HandleCreateUser(ctx context.Context, event events.APIGatewayProxyRequest, 
 		return util.NewErrorResponse(http.StatusBadRequest, "validation error"), nil
 	}
 
-	repo := repo.NewDynamoUserRepository(cfg)
+	repo := dynamostore.NewDynamoProfileRepository(cfg)
 	userService := service.NewUserService(repo)
 
 	err := userService.CreateUser(ctx, input.Name, input.LastName, input.Email)
