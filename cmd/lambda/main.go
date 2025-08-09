@@ -20,6 +20,7 @@ func main() {
 				return handler.HandleCreateUser(ctx, event, appConfig)
 			}
 		}
+
 		return events.APIGatewayProxyResponse{
 			StatusCode: 404,
 			Body:       `{"message":"Route not found"}`,

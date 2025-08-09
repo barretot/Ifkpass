@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"errors"
 
+	"github.com/barretot/ifkpass/internal/apperrors"
 	"github.com/barretot/ifkpass/internal/repo"
 	"github.com/barretot/ifkpass/internal/store/dynamostore/models"
 	"github.com/barretot/ifkpass/internal/util"
@@ -17,17 +17,21 @@ func NewUserService(r repo.UserRepository) *UserService {
 	return &UserService{repo: r}
 }
 
-func (s *UserService) CreateUser(ctx context.Context, name, email string) error {
-	existing, _ := s.repo.FindByEmail(ctx, email)
-	if existing != nil {
-		return errors.New("user already exists")
+func (s *UserService) CreateUser(ctx context.Context, name, lastname, email string) error {
+	user, err := s.repo.FindByEmail(ctx, email)
+
+	if err != nil {
+		return err
 	}
 
-	user := models.User{
-		ID:    util.GenerateUUID(),
-		Name:  name,
-		Email: email,
+	if user != nil {
+		return apperrors.ErrorUserAlreadyExists
 	}
 
-	return s.repo.Save(ctx, user)
+	return s.repo.Save(ctx, models.User{
+		UserId:   util.GenerateUUID(),
+		Name:     name,
+		LastName: lastname,
+		Email:    email,
+	})
 }

@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -36,18 +37,27 @@ func NewDynamoUserRepository(cfg config.AppConfig) UserRepository {
 
 func (r *dynamoUserRepository) Save(ctx context.Context, user models.User) error {
 	item, err := attributevalue.MarshalMap(user)
+
 	if err != nil {
 		return err
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
 
 	_, err = r.client.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: aws.String(r.tableName),
 		Item:      item,
 	})
+
 	return err
 }
 
 func (r *dynamoUserRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
 	out, err := r.client.Query(ctx, &dynamodb.QueryInput{
 		TableName:              aws.String(r.tableName),
 		IndexName:              aws.String("email-index"),
@@ -57,11 +67,13 @@ func (r *dynamoUserRepository) FindByEmail(ctx context.Context, email string) (*
 		},
 		Limit: aws.Int32(1),
 	})
+
 	if err != nil || len(out.Items) == 0 {
-		return nil, errors.New("not found")
+		return nil, errors.New("user not found")
 	}
 
 	var user models.User
+
 	if err := attributevalue.UnmarshalMap(out.Items[0], &user); err != nil {
 		return nil, err
 	}

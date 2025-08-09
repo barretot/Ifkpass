@@ -1,7 +1,8 @@
 package models
 
 type User struct {
-	ID    string `dynamodbav:"id"`
-	Name  string `dynamodbav:"name"`
-	Email string `dynamodbav:"email"`
+	UserId   string `dynamodbav:"userId"`
+	Name     string `dynamodbav:"name"`
+	LastName string `dynamodbav:"lastname"`
+	Email    string `dynamodbav:"email"`
 }

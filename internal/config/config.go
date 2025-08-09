@@ -1,6 +1,11 @@
 package config
 
-import "os"
+import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
 
 type AppConfig struct {
 	Region    string
@@ -8,8 +13,14 @@ type AppConfig struct {
 }
 
 func LoadConfig() AppConfig {
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	return AppConfig{
 		Region:    os.Getenv("AWS_REGION"),
-		TableName: os.Getenv("DYNAMO_TABLE_NAME"),
+		TableName: os.Getenv("PROFILES_TABLE_NAME"),
 	}
 }

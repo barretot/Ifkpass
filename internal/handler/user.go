@@ -3,9 +3,11 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/barretot/ifkpass/internal/apperrors"
 	"github.com/barretot/ifkpass/internal/config"
 	"github.com/barretot/ifkpass/internal/dto"
 	"github.com/barretot/ifkpass/internal/repo"
@@ -26,11 +28,15 @@ func HandleCreateUser(ctx context.Context, event events.APIGatewayProxyRequest, 
 	}
 
 	repo := repo.NewDynamoUserRepository(cfg)
-
 	userService := service.NewUserService(repo)
 
-	if err := userService.CreateUser(ctx, input.Name, input.Email); err != nil {
-		return util.NewErrorResponse(500, err.Error()), nil
+	err := userService.CreateUser(ctx, input.Name, input.LastName, input.Email)
+
+	if err != nil {
+		errors.Is(err, apperrors.ErrorUserAlreadyExists)
+		return util.EncodeJson(http.StatusBadRequest, map[string]any{
+			"error": "user already exists",
+		})
 	}
 
 	return util.NewSuccessResponse(201, "user created"), nil
