@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/barretot/ifkpass/internal/apperrors"
 	"github.com/barretot/ifkpass/internal/config"
+	"github.com/barretot/ifkpass/internal/contextkeys"
 	"github.com/barretot/ifkpass/internal/dto"
 	"github.com/barretot/ifkpass/internal/identity"
 	"github.com/barretot/ifkpass/internal/logger"
@@ -33,9 +34,11 @@ func HandleCreateUser(ctx context.Context, event events.APIGatewayProxyRequest, 
 	identityprovider := identity.NewIdentityProvider(cfg)
 	userService := service.NewUserService(repo, identityprovider)
 
+	requestID, _ := ctx.Value(contextkeys.RequestID).(string)
+
 	logger.Log.Info("received create user request",
 		"email", input.Email,
-		"request_id", event.RequestContext.RequestID,
+		"request_id", requestID,
 	)
 
 	err := userService.CreateUser(ctx, cfg, input.Name, input.LastName, input.Email, input.Password)
