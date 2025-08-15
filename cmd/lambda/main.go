@@ -21,6 +21,14 @@ func main() {
 			if event.HTTPMethod == "POST" {
 				return handler.HandleCreateUser(ctx, event, cfg)
 			}
+		case "/auth":
+			if event.HTTPMethod == "POST" {
+				return handler.HandleAuthenticate(ctx, event, cfg)
+			}
+		case "/verify":
+			if event.HTTPMethod == "POST" {
+				return handler.HandleVerifyEmail(ctx, event, cfg)
+			}
 		}
 
 		return events.APIGatewayProxyResponse{

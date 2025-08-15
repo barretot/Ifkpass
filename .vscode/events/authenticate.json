@@ -1,0 +1,10 @@
+{
+  "body": "{\"email\":\"barretoruan77@gmail.com\",\"password\":\"ifkPass@Admin2025\"}",
+  "httpMethod": "POST",
+  "resource": "/auth",
+  "path": "/auth",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "isBase64Encoded": false
+}
