@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/barretot/ifkpass/internal/apperrors"
 	"github.com/barretot/ifkpass/internal/config"
@@ -13,41 +14,37 @@ import (
 )
 
 type UserService struct {
-	repo             repo.ProfileRepository
-	identityprovider identity.IdentityProviderAdapter
+	repo repo.ProfileRepository
+	idp  identity.IdentityProviderAdapter
 }
 
 func NewUserService(
 	r repo.ProfileRepository,
-	identityprovider identity.IdentityProviderAdapter,
+	idp identity.IdentityProviderAdapter,
 ) *UserService {
-	return &UserService{repo: r, identityprovider: identityprovider}
+	return &UserService{repo: r, idp: idp}
 }
 
 func (s *UserService) CreateUser(ctx context.Context, cfg config.AppConfig, name, lastname, email, password string) error {
-	user, err := s.repo.FindByEmail(ctx, email)
 
-	if err != nil {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	if _, err := s.repo.FindByEmail(ctx, email); err != nil {
 		if !errors.Is(err, apperrors.ErrUserNotFound) {
-			return fmt.Errorf("find user by email: %w", err)
+			return fmt.Errorf("repo: find user by email: %w", err)
 		}
-	} else if user != nil {
+	} else {
 		return apperrors.ErrUserAlreadyExists
 	}
 
-	if err := s.identityprovider.SignUp(ctx, cfg, email, password); err != nil {
+	userID, err := s.idp.SignUp(ctx, cfg, email, password)
+
+	if err != nil {
 		if errors.Is(err, apperrors.ErrUserAlreadyExists) {
 			return apperrors.ErrUserAlreadyExists
 		}
-		return fmt.Errorf("cognito signup: %w", err)
-	}
-
-	userID, err := s.identityprovider.GetUserId(ctx, cfg, email)
-	if err != nil {
-		if errors.Is(err, apperrors.ErrUserNotFound) {
-			return apperrors.ErrUserNotFound
-		}
-		return fmt.Errorf("get user id from identity provider: %w", err)
+		return fmt.Errorf("idp: signup: %w", err)
 	}
 
 	if err := s.repo.Save(ctx, models.User{
@@ -56,7 +53,10 @@ func (s *UserService) CreateUser(ctx context.Context, cfg config.AppConfig, name
 		LastName: lastname,
 		Email:    email,
 	}); err != nil {
-		return fmt.Errorf("save user: %w", err)
+		if errors.Is(err, apperrors.ErrUserAlreadyExists) {
+			return apperrors.ErrUserAlreadyExists
+		}
+		return fmt.Errorf("repo: save user: %w", err)
 	}
 
 	return nil
