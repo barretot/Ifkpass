@@ -55,7 +55,7 @@ func HandleVerifyEmail(ctx context.Context, event events.APIGatewayProxyRequest,
 		})
 	}
 
-	return util.EncodeJson(int(http.StatusOK), map[string]any{
+	return util.EncodeJson(http.StatusOK, map[string]any{
 		"token": token,
 	})
 }

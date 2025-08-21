@@ -27,7 +27,7 @@ package:
 
 functions:
   Proxy:
-    handler: bootstrap
+    handler: main
     name: ${self:service}-${self:provider.stage}-proxy
     timeout: 900
     events:
