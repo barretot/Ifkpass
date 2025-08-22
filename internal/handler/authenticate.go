@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/barretot/ifkpass/internal/apperrors"
-	"github.com/barretot/ifkpass/internal/config"
 	"github.com/barretot/ifkpass/internal/contextkeys"
 	"github.com/barretot/ifkpass/internal/dto"
 	"github.com/barretot/ifkpass/internal/identity"
@@ -19,7 +18,7 @@ import (
 	"github.com/barretot/ifkpass/internal/validator"
 )
 
-func HandleAuthenticate(ctx context.Context, event events.APIGatewayProxyRequest, cfg config.AppConfig) (events.APIGatewayProxyResponse, error) {
+func HandleAuthenticate(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var input dto.AuthenticateInput
 
 	if err := json.Unmarshal([]byte(event.Body), &input); err != nil {
@@ -30,8 +29,8 @@ func HandleAuthenticate(ctx context.Context, event events.APIGatewayProxyRequest
 		return util.NewErrorResponse(http.StatusBadRequest, "validation error"), nil
 	}
 
-	repo := dynamostore.NewDynamoProfileRepository(cfg)
-	identityprovider := identity.NewIdentityProvider(cfg)
+	repo := dynamostore.NewDynamoProfileRepository()
+	identityprovider := identity.NewIdentityProvider()
 	s := service.NewAuthenticateService(repo, identityprovider)
 
 	requestID, _ := ctx.Value(contextkeys.RequestID).(string)
@@ -41,7 +40,7 @@ func HandleAuthenticate(ctx context.Context, event events.APIGatewayProxyRequest
 		"request_id", requestID,
 	)
 
-	token, err := s.Authenticate(ctx, cfg, input.Email, input.Password)
+	token, err := s.Authenticate(ctx, input.Email, input.Password)
 
 	if err != nil {
 		if errors.Is(err, apperrors.ErrUserAlreadyExists) {

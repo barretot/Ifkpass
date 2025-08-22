@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/barretot/ifkpass/internal/apperrors"
-	"github.com/barretot/ifkpass/internal/config"
 	"github.com/barretot/ifkpass/internal/identity"
 	"github.com/barretot/ifkpass/internal/repo"
 )
@@ -24,7 +23,7 @@ func NewAuthenticateService(
 	return &AuthenticateService{repo: r, idp: idp}
 }
 
-func (s *AuthenticateService) Authenticate(ctx context.Context, cfg config.AppConfig, email, password string) (string, error) {
+func (s *AuthenticateService) Authenticate(ctx context.Context, email, password string) (string, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
@@ -36,7 +35,7 @@ func (s *AuthenticateService) Authenticate(ctx context.Context, cfg config.AppCo
 		return "", fmt.Errorf("repo: find user by email: %w", err)
 	}
 
-	token, err := s.idp.SignIn(ctx, cfg, email, password)
+	token, err := s.idp.SignIn(ctx, email, password)
 	if err != nil {
 		return "", fmt.Errorf("idp: signin: %w", err)
 	}

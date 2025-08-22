@@ -19,7 +19,9 @@ type IdentityProvider struct {
 	client *cognitoidentityprovider.Client
 }
 
-func NewIdentityProvider(cfg config.AppConfig) IdentityProviderAdapter {
+var cfg = config.LoadConfig()
+
+func NewIdentityProvider() IdentityProviderAdapter {
 	awsCfg, _ := awsconfig.LoadDefaultConfig(
 		context.TODO(),
 		awsconfig.WithRegion(cfg.Region),
@@ -30,14 +32,14 @@ func NewIdentityProvider(cfg config.AppConfig) IdentityProviderAdapter {
 	}
 }
 
-func (identityprovider *IdentityProvider) SignUp(ctx context.Context, cfg config.AppConfig, email, password string) (string, error) {
+func (idp *IdentityProvider) SignUp(ctx context.Context, email, password string) (string, error) {
 	logger.Log.Info("starting cognito signup",
 		"email", email,
 	)
 
 	hash := util.GenerateSecretHash(cfg.CognitoClientSecret, email, cfg.CognitoClientID)
 
-	_, err := identityprovider.client.SignUp(ctx, &cognitoidentityprovider.SignUpInput{
+	_, err := idp.client.SignUp(ctx, &cognitoidentityprovider.SignUpInput{
 		ClientId:   aws.String(cfg.CognitoClientID),
 		Username:   aws.String(email),
 		Password:   aws.String(password),
@@ -49,7 +51,7 @@ func (identityprovider *IdentityProvider) SignUp(ctx context.Context, cfg config
 		return "", fmt.Errorf("cognito signup: %w", err)
 	}
 
-	response, err := identityprovider.client.AdminGetUser(ctx, &cognitoidentityprovider.AdminGetUserInput{
+	response, err := idp.client.AdminGetUser(ctx, &cognitoidentityprovider.AdminGetUserInput{
 		Username:   aws.String(email),
 		UserPoolId: aws.String(cfg.CognitoUserPoolID),
 	})
@@ -66,7 +68,7 @@ func (identityprovider *IdentityProvider) SignUp(ctx context.Context, cfg config
 
 }
 
-func (idp *IdentityProvider) SignIn(ctx context.Context, cfg config.AppConfig, email, password string) (*string, error) {
+func (idp *IdentityProvider) SignIn(ctx context.Context, email, password string) (*string, error) {
 	logger.Log.Info("starting cognito signin", "email", email)
 
 	hash := util.GenerateSecretHash(cfg.CognitoClientSecret, email, cfg.CognitoClientID)
@@ -119,7 +121,7 @@ func (idp *IdentityProvider) SignIn(ctx context.Context, cfg config.AppConfig, e
 	return r.AuthenticationResult.AccessToken, nil
 }
 
-func (identityprovider *IdentityProvider) GetUserId(ctx context.Context, cfg config.AppConfig, email string) (string, error) {
+func (identityprovider *IdentityProvider) GetUserId(ctx context.Context, email string) (string, error) {
 	response, err := identityprovider.client.AdminGetUser(ctx, &cognitoidentityprovider.AdminGetUserInput{
 		Username:   aws.String(email),
 		UserPoolId: aws.String(cfg.CognitoUserPoolID),
@@ -133,7 +135,7 @@ func (identityprovider *IdentityProvider) GetUserId(ctx context.Context, cfg con
 	return *response.Username, nil
 }
 
-func (identityprovider *IdentityProvider) IsEmailVerified(ctx context.Context, cfg config.AppConfig, email string) (bool, error) {
+func (identityprovider *IdentityProvider) IsEmailVerified(ctx context.Context, email string) (bool, error) {
 	response, err := identityprovider.client.AdminGetUser(ctx, &cognitoidentityprovider.AdminGetUserInput{
 		Username:   aws.String(email),
 		UserPoolId: aws.String(cfg.CognitoUserPoolID),
@@ -156,7 +158,7 @@ func (identityprovider *IdentityProvider) IsEmailVerified(ctx context.Context, c
 	return emailVerified, nil
 }
 
-func (identityprovider *IdentityProvider) ConfirmEmail(ctx context.Context, cfg config.AppConfig, email, code string) error {
+func (identityprovider *IdentityProvider) ConfirmEmail(ctx context.Context, email, code string) error {
 	hash := util.GenerateSecretHash(cfg.CognitoClientSecret, email, cfg.CognitoClientID)
 
 	_, err := identityprovider.client.ConfirmSignUp(ctx, &cognitoidentityprovider.ConfirmSignUpInput{

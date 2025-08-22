@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/barretot/ifkpass/internal/apperrors"
-	"github.com/barretot/ifkpass/internal/config"
 	"github.com/barretot/ifkpass/internal/identity"
 	"github.com/barretot/ifkpass/internal/repo"
 )
@@ -24,7 +23,7 @@ func NewVerifyEmailService(
 	return &VerifyEmailService{repo: r, idp: idp}
 }
 
-func (s *VerifyEmailService) VerifyEmail(ctx context.Context, cfg config.AppConfig, email, password, code string) (string, error) {
+func (s *VerifyEmailService) VerifyEmail(ctx context.Context, email, password, code string) (string, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
@@ -36,7 +35,7 @@ func (s *VerifyEmailService) VerifyEmail(ctx context.Context, cfg config.AppConf
 		return "", fmt.Errorf("repo: find user by email: %w", err)
 	}
 
-	isVerified, err := s.idp.IsEmailVerified(ctx, cfg, email)
+	isVerified, err := s.idp.IsEmailVerified(ctx, email)
 	if err != nil {
 		return "", fmt.Errorf("idp: check email verified: %w", err)
 	}
@@ -44,11 +43,11 @@ func (s *VerifyEmailService) VerifyEmail(ctx context.Context, cfg config.AppConf
 		return "", apperrors.ErrEmailAlreadyVerified
 	}
 
-	if err := s.idp.ConfirmEmail(ctx, cfg, email, code); err != nil {
+	if err := s.idp.ConfirmEmail(ctx, email, code); err != nil {
 		return "", fmt.Errorf("idp: confirm email: %w", err)
 	}
 
-	token, err := s.idp.SignIn(ctx, cfg, email, password)
+	token, err := s.idp.SignIn(ctx, email, password)
 	if err != nil {
 		return "", fmt.Errorf("idp: signin: %w", err)
 	}

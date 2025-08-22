@@ -23,7 +23,9 @@ type DynamoProfileRepository struct {
 	tableName string
 }
 
-func NewDynamoProfileRepository(cfg config.AppConfig) repo.ProfileRepository {
+var cfg = config.LoadConfig()
+
+func NewDynamoProfileRepository() repo.ProfileRepository {
 	awsCfg, _ := awsconfig.LoadDefaultConfig(context.TODO(),
 		awsconfig.WithRegion(cfg.Region),
 	)

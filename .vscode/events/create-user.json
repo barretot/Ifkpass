@@ -1,5 +1,5 @@
 {
-  "body": "{\"name\":\"John\",\"lastName\":\"Doe\",\"email\":\"barretoruan1406@gmail.com\",\"password\":\"ifkPass@Admin2025\"}",
+  "body": "{\"name\":\"John\",\"lastName\":\"Doe\",\"email\":\"barretoruan77@gmail.com\",\"password\":\"ifkPass@Admin2025\"}",
   "httpMethod": "POST",
   "resource": "/user",
   "path": "/user",

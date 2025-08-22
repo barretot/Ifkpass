@@ -30,15 +30,19 @@ func main() {
 		switch event.Resource {
 		case "/user":
 			if event.HTTPMethod == "POST" {
-				return handler.HandleCreateUser(ctx, event, cfg)
+				return handler.HandleCreateUser(ctx, event)
 			}
 		case "/auth":
 			if event.HTTPMethod == "POST" {
-				return handler.HandleAuthenticate(ctx, event, cfg)
+				return handler.HandleAuthenticate(ctx, event)
 			}
 		case "/verify":
 			if event.HTTPMethod == "POST" {
-				return handler.HandleVerifyEmail(ctx, event, cfg)
+				return handler.HandleVerifyEmail(ctx, event)
+			}
+		case "/profile/photo":
+			if event.HTTPMethod == "POST" {
+				return handler.HandleSendPhoto(ctx, event)
 			}
 		}
 
