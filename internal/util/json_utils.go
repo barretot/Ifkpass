@@ -14,7 +14,7 @@ func EncodeJson[T any](statusCode int, data T) (events.APIGatewayProxyResponse, 
 	var buf bytes.Buffer
 
 	encoder := json.NewEncoder(&buf)
-	encoder.SetEscapeHTML(false) // 👈 evita \u0026 no output
+	encoder.SetEscapeHTML(false)
 
 	if err := encoder.Encode(data); err != nil {
 		return events.APIGatewayProxyResponse{}, fmt.Errorf("failed to encode json: %w", err)
